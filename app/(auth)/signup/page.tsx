@@ -41,14 +41,14 @@ export default function SignupPage() {
         email: values.email,
         password: values.password,
         name: values.name,
-        callbackURL: "/chat",
+        callbackURL: "/",
       });
 
       if (response && !response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to create account");
       } else {
-        router.push("/chat");
+        router.push("/");
       }
     } catch (err) {
       setError("An unexpected error occurred");
