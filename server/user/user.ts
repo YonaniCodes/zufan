@@ -44,5 +44,6 @@ export const signUpAction = async (data: {
       image: data.image,
       callbackURL: data.callbackURL,
     },
+    asResponse: true,
   });
 };

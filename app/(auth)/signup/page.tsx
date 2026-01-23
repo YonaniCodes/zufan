@@ -37,15 +37,16 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await signUpAction({
+      const response = await signUpAction({
         email: values.email,
         password: values.password,
         name: values.name,
         callbackURL: "/chat",
       });
 
-      if (error) {
-        setError(error.message || "Failed to create account");
+      if (response && !response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to create account");
       } else {
         router.push("/chat");
       }
