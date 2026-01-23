@@ -23,8 +23,14 @@ export const getSessionAction = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  return session;
+  const user= session?.user
+  const isAdmin= user?.role === "admin";
+  const isUser= user?.role === "user";
+  const role= user?.role;
+  return {session, isAdmin, isUser, role };
 };
+
+
 
 /**
  * Sign up a new user with email and password
