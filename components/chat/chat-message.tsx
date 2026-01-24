@@ -25,12 +25,12 @@ export function ChatMessage({ role, content, citations }: ChatMessageProps) {
         {isAssistant ? (
           <>
             <Bot className="size-5 m-auto text-primary" />
-            <AvatarFallback>ዝ</AvatarFallback>
+            <AvatarFallback>ቦት</AvatarFallback>
           </>
         ) : (
           <>
             <User className="size-5 m-auto" />
-            <AvatarFallback>ዩ</AvatarFallback>
+            <AvatarFallback>ተጠቃሚ</AvatarFallback>
           </>
         )}
       </Avatar>
@@ -52,7 +52,7 @@ export function ChatMessage({ role, content, citations }: ChatMessageProps) {
               >
                 <Quote className="size-3" />
                 <span className="truncate max-w-[120px] font-amharic">ምንጭ: {citation.source}</span>
-                
+
                 {/* Tooltip-like expanded content on hover */}
                 <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-3 rounded-lg border bg-popover text-popover-foreground shadow-lg z-50 pointer-events-none">
                   <p className="font-amharic text-xs leading-normal">
