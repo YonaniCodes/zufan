@@ -14,20 +14,38 @@ interface Message {
   citations?: { source: string; content: string }[]
 }
 
+interface Chat {
+  id: string
+  title: string
+  messages: Message[]
+}
+
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+
 export default function HomePage() {
-  const [messages, setMessages] = React.useState<Message[]>([
-    {
-      role: "assistant",
-      content: "ጤና ይስጥልኝ! እኔ ዝፋን ነኝ። በኢትዮጵያ የሕግ ጉዳዮች ላይ የተዘጋጁ ሰነዶችን መሠረት አድርጌ ጥያቄዎችዎን ለመመለስ ዝግጁ ነኝ። እንዴት ልርዳዎት?",
-    },
+  const initialMessage: Message = {
+    role: "assistant",
+    content: "ጤና ይስጥልኝ! እኔ ዝፋን ነኝ። በኢትዮጵያ የሕግ ጉዳዮች ላይ የተዘጋጁ ሰነዶችን መሠረት አድርጌ ጥያቄዎችዎን ለመመለስ ዝግጁ ነኝ። እንዴት ልርዳዎት?",
+  }
+
+  const [chats, setChats] = React.useState<Chat[]>([
+    { id: "1", title: "ውይይት 1", messages: [initialMessage] }
   ])
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
+  const [activeChatId, setActiveChatId] = React.useState<string>("1")
+
+  const activeChat = chats.find(c => c.id === activeChatId) || chats[0]
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
   const handleSend = async (content: string) => {
-    // Add user message
+    // Add user message to active chat
     const newUserMessage: Message = { role: "user", content }
-    setMessages((prev) => [...prev, newUserMessage])
+
+    setChats(prev => prev.map(chat => {
+      if (chat.id === activeChatId) {
+        return { ...chat, messages: [...chat.messages, newUserMessage] }
+      }
+      return chat
+    }))
 
     // Mock assistant response
     setTimeout(() => {
@@ -41,8 +59,50 @@ export default function HomePage() {
           },
         ],
       }
-      setMessages((prev) => [...prev, assistantResponse])
+
+      setChats(prev => prev.map(chat => {
+        if (chat.id === activeChatId) {
+          return { ...chat, messages: [...chat.messages, assistantResponse] }
+        }
+        return chat
+      }))
     }, 1000)
+  }
+
+  const handleNewChat = () => {
+    const newId = Date.now().toString()
+    const newChat: Chat = {
+      id: newId,
+      title: `ውይይት ${chats.length + 1}`,
+      messages: [initialMessage]
+    }
+    setChats(prev => [...prev, newChat])
+    setActiveChatId(newId)
+  }
+
+  const handleDeleteChat = (id: string) => {
+    setChats(prev => {
+      const filtered = prev.filter(c => c.id !== id)
+
+      // If we deleted the active chat, switch to another one
+      if (id === activeChatId) {
+        if (filtered.length > 0) {
+          setActiveChatId(filtered[0].id)
+        } else {
+          // If no chats left, create a new one
+          const newId = Date.now().toString()
+          const newChat: Chat = {
+            id: newId,
+            title: "ውይይት 1",
+            messages: [initialMessage]
+          }
+          setActiveChatId(newId)
+          return [newChat]
+        }
+      }
+
+      return filtered
+    })
   }
 
   // Auto-scroll to bottom
@@ -53,28 +113,23 @@ export default function HomePage() {
         behavior: "smooth",
       })
     }
-  }, [messages])
+  }, [activeChat.messages])
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden relative">
-      {/* Desktop Sidebar */}
-      <ChatSidebar 
-        className={`${isSidebarOpen ? "w-72" : "w-0"} transition-all duration-300 ease-in-out shrink-0 overflow-hidden hidden md:flex`} 
+      <ChatSidebar
+        chats={chats.map(c => ({ id: c.id, title: c.title }))}
+        activeChatId={activeChatId}
+        onChatSelect={setActiveChatId}
+        onNewChat={handleNewChat}
+        onChatDelete={handleDeleteChat}
       />
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col relative min-w-0">
+      <SidebarInset className="flex flex-col relative min-w-0">
         {/* Header */}
         <header className="h-14 border-b flex items-center px-4 justify-between bg-background z-10">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:flex hidden"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-              <Menu className="size-5" />
-            </Button>
+            <SidebarTrigger />
             <h2 className="font-bold text-lg font-amharic">ዝፋን</h2>
           </div>
           <div className="flex items-center gap-2">
@@ -85,12 +140,12 @@ export default function HomePage() {
         {/* Messages */}
         <ScrollArea className="flex-1" ref={scrollRef}>
           <div className="flex flex-col w-full max-w-4xl mx-auto pb-32">
-            {messages.map((message, i) => (
-              <ChatMessage 
-                key={i} 
-                role={message.role} 
-                content={message.content} 
-                citations={message.citations} 
+            {activeChat.messages.map((message, i) => (
+              <ChatMessage
+                key={i}
+                role={message.role}
+                content={message.content}
+                citations={message.citations}
               />
             ))}
           </div>
@@ -100,7 +155,7 @@ export default function HomePage() {
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/90 to-transparent pt-10">
           <ChatInput onSend={handleSend} />
         </div>
-      </main>
+      </SidebarInset>
     </div>
   )
 }
