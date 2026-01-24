@@ -110,54 +110,56 @@ export function UploadZone() {
     }
 
     return (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 w-full md:grid-cols-2">
             <Card
-                className={`border-dashed border-2 flex flex-col items-center justify-center p-6 text-center transition-colors ${file ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+                className={`border-dashed border-2 transition-colors ${file ? "border-primary bg-primary/5" : "hover:bg-muted/50"
                     }`}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
             >
-                <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept=".pdf,.docx,.txt"
-                />
-                {file ? (
-                    <div className="flex flex-col items-center gap-2">
-                        <FileIcon className="h-10 w-10 text-primary" />
-                        <p className="font-medium">{file.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setFile(null)}
-                            className="mt-2 text-destructive hover:text-destructive"
+                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                    <input
+                        type="file"
+                        id="file-upload"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept=".pdf,.docx,.txt"
+                    />
+                    {file ? (
+                        <div className="flex flex-col items-center gap-2">
+                            <FileIcon className="h-10 w-10 text-primary" />
+                            <p className="font-medium">{file?.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {file ? (file.size / 1024 / 1024).toFixed(2) : "0"} MB
+                            </p>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setFile(null)}
+                                className="mt-2 text-destructive hover:text-destructive"
+                            >
+                                <X className="mr-2 h-4 w-4" /> Remove
+                            </Button>
+                        </div>
+                    ) : (
+                        <label
+                            htmlFor="file-upload"
+                            className="flex flex-col items-center cursor-pointer"
                         >
-                            <X className="mr-2 h-4 w-4" /> Remove
-                        </Button>
-                    </div>
-                ) : (
-                    <label
-                        htmlFor="file-upload"
-                        className="flex flex-col items-center cursor-pointer"
-                    >
-                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                        <h3 className="font-semibold text-lg">Upload Legal Document</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Drag & drop or click to browse
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                            PDF, DOCX, TXT (Max 50MB)
-                        </p>
-                    </label>
-                )}
+                            <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                            <h3 className="font-semibold text-lg">Upload Legal Document</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Drag & drop or click to browse
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                PDF, DOCX, TXT (Max 50MB)
+                            </p>
+                        </label>
+                    )}
+                </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
                 <CardHeader>
                     <CardTitle>Metadata & Indexing</CardTitle>
                     <CardDescription>
@@ -178,7 +180,7 @@ export function UploadZone() {
                                             defaultValue={field.value}
                                         >
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select jurisdiction" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -217,7 +219,7 @@ export function UploadZone() {
                                             defaultValue={field.value}
                                         >
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select type" />
                                                 </SelectTrigger>
                                             </FormControl>
