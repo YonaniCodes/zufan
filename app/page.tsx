@@ -195,7 +195,7 @@ export default function HomePage() {
                     }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>Log out {session?.user?.name} </span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -203,7 +203,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 <AuthDialog defaultMode="login">
                   <Button variant="outline" className="h-10">
-                    Login
+                    Login 
                   </Button>
                 </AuthDialog>
                 <AuthDialog defaultMode="signup">

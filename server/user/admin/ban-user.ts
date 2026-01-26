@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function banUser(
   userId: string,
@@ -13,7 +14,8 @@ export async function banUser(
         userId,
         banReason,
         banExpiresIn,
-      }
+      },
+      headers: await headers(),
     });
  
     return { success: true, data };

@@ -2,6 +2,7 @@
 
 import { UserType, ListUsersQuery, NormalizedListUsersResponse } from "@/types/user";
 import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 const listUsers = async ({
   query = {},
@@ -9,7 +10,10 @@ const listUsers = async ({
   const { limit = 100, offset = 0 } = query;
 
   try {
-    const data = await auth.api.listUsers({ query });
+    const data = await auth.api.listUsers({
+      query,
+      headers: await headers(),
+    });
 
     // Normalize the response here
     const normalized: NormalizedListUsersResponse = {

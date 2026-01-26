@@ -7,20 +7,19 @@ import { headers } from "next/headers";
  * Sign in a user with email and password
  */
 export const signInAction = async (email: string, password: string) => {
-  const response = await auth.api.signInEmail({
-    body: {
-      email,
-      password,
-    },
-    asResponse: true,
-  });
+  try {
+    await auth.api.signInEmail({
+      body: {
+        email,
+        password,
+      },
+      headers: await headers(),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    return { error: errorData.message || "Failed to sign in", success: false };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to sign in", success: false };
   }
-
-  return { success: true };
 };
 
 /**
@@ -34,7 +33,11 @@ export const getSessionAction = async () => {
   const isAdmin= user?.role === "admin";
   const isUser= user?.role === "user";
   const role= user?.role;
-  return {session, isAdmin, isUser, role };
+  
+	console.log("Session:", session);
+	console.log("User role:", session?.user?.role); 
+  return {session, isAdmin, isUser, role , userId:user?.id };
+ 
 };
 
 
@@ -49,21 +52,20 @@ export const signUpAction = async (data: {
   image?: string;
   callbackURL?: string;
 }) => {
-  const response = await auth.api.signUpEmail({
-    body: {
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      image: data.image,
-      callbackURL: data.callbackURL,
-    },
-    asResponse: true,
-  });
+  try {
+    await auth.api.signUpEmail({
+      body: {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        image: data.image,
+        callbackURL: data.callbackURL,
+      },
+      headers: await headers(),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    return { error: errorData.message || "Failed to create account", success: false };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to create account", success: false };
   }
-
-  return { success: true };
 };

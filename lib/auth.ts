@@ -1,24 +1,27 @@
-import { MongoClient } from "mongodb";
 import { betterAuth } from "better-auth";
-import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { admin } from "better-auth/plugins"
 import { nextCookies } from "better-auth/next-js";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import schema from "@/db/schema";
+import { db } from "@/db/drizzle";
 
 if (!process.env.BETTER_AUTH_SECRET) {
 	throw new Error('Invalid/Missing environment variable: "BETTER_AUTH_SECRET"');
 }
 
-if (!process.env.NEXT_PUBLIC_MONGODB_URI) {
-	throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
-}
-
-const client = new MongoClient(process.env.NEXT_PUBLIC_MONGODB_URI);
-const db = client.db();
-
 export const auth = betterAuth({
 	secret: process.env.BETTER_AUTH_SECRET,
-	database: mongodbAdapter(db, {
-		client
+	database: drizzleAdapter(db, {
+		provider: "pg",
+		schema: {
+			user: schema.user,
+			session: schema.session,
+			account: schema.account,
+			verification: schema.verification,
+			userRelations: schema.userRelations,
+			sessionRelations: schema.sessionRelations,
+			accountRelations: schema.accountRelations,
+		},
 	}),
 	experimental: { joins: true },
 	emailAndPassword: { enabled: true },
