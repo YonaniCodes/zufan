@@ -6,6 +6,7 @@ import {
     FileClock,
     LayoutDashboard,
     Settings,
+    Users,
 } from "lucide-react"
 
 import {
@@ -41,6 +42,11 @@ const items = [
         title: "Audit Logs",
         url: "/admin/audit-logs",
         icon: FileClock,
+    },
+    {
+        title: "Users",
+        url: "/admin/users",
+        icon: Users,
     },
     {
         title: "Settings",
