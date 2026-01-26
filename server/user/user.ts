@@ -7,13 +7,20 @@ import { headers } from "next/headers";
  * Sign in a user with email and password
  */
 export const signInAction = async (email: string, password: string) => {
-  return await auth.api.signInEmail({
+  const response = await auth.api.signInEmail({
     body: {
       email,
       password,
     },
     asResponse: true,
   });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    return { error: errorData.message || "Failed to sign in", success: false };
+  }
+
+  return { success: true };
 };
 
 /**
@@ -42,7 +49,7 @@ export const signUpAction = async (data: {
   image?: string;
   callbackURL?: string;
 }) => {
-  return await auth.api.signUpEmail({
+  const response = await auth.api.signUpEmail({
     body: {
       name: data.name,
       email: data.email,
@@ -52,4 +59,11 @@ export const signUpAction = async (data: {
     },
     asResponse: true,
   });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    return { error: errorData.message || "Failed to create account", success: false };
+  }
+
+  return { success: true };
 };

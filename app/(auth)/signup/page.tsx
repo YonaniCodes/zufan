@@ -44,9 +44,8 @@ export default function SignupPage() {
         callbackURL: "/",
       });
 
-      if (response && !response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to create account");
+      if (response && 'error' in response) {
+        setError(response.error || "Failed to create account");
       } else {
         router.push("/");
       }
