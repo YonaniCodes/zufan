@@ -4,7 +4,7 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginSchema, type LoginFormValues, signupSchema, type SignupFormValues } from "@/lib/schemas/auth"
-import { signInAction, signUpAction } from "@/server/user/user"
+import { signIn, signUp } from "@/lib/auth-client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -62,9 +62,12 @@ export function AuthDialog({
     setLoading(true)
     setError(null)
     try {
-      const response = await signInAction(values.email, values.password)
-      if (response && 'error' in response) {
-        setError(response.error || "Invalid credentials")
+      const { error: signInError } = await signIn.email({
+        email: values.email,
+        password: values.password,
+      })
+      if (signInError) {
+        setError(signInError.message || "Invalid credentials")
       } else {
         toast.success("Logged in successfully")
         setOpen(false)
@@ -81,14 +84,14 @@ export function AuthDialog({
     setLoading(true)
     setError(null)
     try {
-      const response = await signUpAction({
+      const { error: signUpError } = await signUp.email({
+        name: values.name,
         email: values.email,
         password: values.password,
-        name: values.name,
       })
 
-      if (response && 'error' in response) {
-        setError(response.error || "Failed to create account")
+      if (signUpError) {
+        setError(signUpError.message || "Failed to create account")
       } else {
         toast.success("Account created successfully")
         setOpen(false)

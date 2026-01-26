@@ -151,6 +151,67 @@ export default function HomePage() {
             <h2 className="font-bold text-lg font-amharic">ዝፋን</h2>
             <div className="px-2 py-1 rounded bg-muted text-[10px] font-bold tracking-wider">LITE</div>
           </div>
+          {!isPending && (
+            user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-10 px-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                      <AvatarFallback>{user.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {user.role === "admin" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={async () => {
+                      await signOut()
+                      router.refresh()
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2">
+                <AuthDialog defaultMode="login">
+                  <Button variant="outline" className="h-10">
+                    Login
+                  </Button>
+                </AuthDialog>
+                <AuthDialog defaultMode="signup">
+                  <Button className="h-10">Sign Up</Button>
+                </AuthDialog>
+              </div>
+            )
+          )}
         </header>
 
         {/* Messages */}
