@@ -1,12 +1,20 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/admin/AppSidebar"
 import { AdminHeader } from "@/components/admin/Header"
+import { getSessionAction } from "@/server/user/user"
+import { redirect } from "next/navigation"
 
-export default function AdminLayout({
+export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const { session, isAdmin } = await getSessionAction()
+
+    if (!session || !isAdmin) {
+        redirect("/")
+    }
+
     return (
         <SidebarProvider>
             <AppSidebar />

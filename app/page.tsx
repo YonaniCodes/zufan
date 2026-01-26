@@ -21,8 +21,26 @@ interface Chat {
 }
 
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { useSession, signOut } from "@/lib/auth-client"
+import { AuthDialog } from "@/components/auth/auth-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { LogOut, User as UserIcon, Settings as SettingsIcon, ShieldCheck } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function HomePage() {
+  const { data: session, isPending } = useSession()
+  const user = session?.user
+  const router = useRouter()
+
   const initialMessage: Message = {
     role: "assistant",
     content: "ጤና ይስጥልኝ! እኔ ዝፋን ነኝ። በኢትዮጵያ የሕግ ጉዳዮች ላይ የተዘጋጁ ሰነዶችን መሠረት አድርጌ ጥያቄዎችዎን ለመመለስ ዝግጁ ነኝ። እንዴት ልርዳዎት?",
@@ -131,8 +149,6 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <SidebarTrigger />
             <h2 className="font-bold text-lg font-amharic">ዝፋን</h2>
-          </div>
-          <div className="flex items-center gap-2">
             <div className="px-2 py-1 rounded bg-muted text-[10px] font-bold tracking-wider">LITE</div>
           </div>
         </header>
