@@ -48,11 +48,7 @@ const items = [
         url: "/admin/users",
         icon: Users,
     },
-    {
-        title: "Settings",
-        url: "/admin/settings",
-        icon: Settings,
-    },
+
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

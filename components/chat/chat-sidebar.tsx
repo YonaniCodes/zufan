@@ -143,14 +143,7 @@ export function ChatSidebar({ chats, activeChatId, onChatSelect, onChatDelete, o
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <SettingsIcon className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="text-destructive focus:text-destructive"

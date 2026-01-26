@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { toast } from "sonner"
 
 export function AuthDialog({ 
@@ -55,6 +56,7 @@ export function AuthDialog({
       name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   })
 
@@ -68,7 +70,7 @@ export function AuthDialog({
       } else {
         toast.success("Logged in successfully")
         setOpen(false)
-        router.refresh()
+        window.location.reload()
       }
     } catch (err) {
       setError("An unexpected error occurred")
@@ -92,7 +94,7 @@ export function AuthDialog({
       } else {
         toast.success("Account created successfully")
         setOpen(false)
-        router.refresh()
+        window.location.reload()
       }
     } catch (err) {
       setError("An unexpected error occurred")
@@ -126,7 +128,7 @@ export function AuthDialog({
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="name@example.com" {...field} />
+                      <Input placeholder="name@example.com" {...field} autoFocus />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,7 +141,7 @@ export function AuthDialog({
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <PasswordInput placeholder="••••••••" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -171,7 +173,7 @@ export function AuthDialog({
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="John Doe" {...field} autoFocus />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,7 +199,20 @@ export function AuthDialog({
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <PasswordInput placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={signupForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput placeholder="••••••••" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

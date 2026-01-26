@@ -7,6 +7,10 @@ export const loginSchema = z.object({
 
 export const signupSchema = loginSchema.extend({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;

@@ -1,8 +1,28 @@
 "use client"
 
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { updateUserPassword } from "@/server/user/admin/update-password"
+import { setUserRole } from "@/server/user/admin/set-role"
 import * as React from "react"
 import {
     ColumnDef,
+
     ColumnFiltersState,
     SortingState,
     VisibilityState,
@@ -13,7 +33,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Search, User, Ban, ShieldCheck, Trash, ShieldAlert } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Search, User, Ban, ShieldCheck, Trash, Key, UserCog } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -49,6 +69,46 @@ export function UserTable({ initialData }: UserTableProps) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+
+    const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false)
+    const [roleDialogOpen, setRoleDialogOpen] = React.useState(false)
+    const [selectedUser, setSelectedUser] = React.useState<UserType | null>(null)
+    const [newPassword, setNewPassword] = React.useState("")
+    const [newRole, setNewRole] = React.useState<"admin" | "user">("user")
+
+    const handlePasswordUpdate = async () => {
+        if (!selectedUser || !newPassword) return;
+        try {
+            const result = await updateUserPassword(selectedUser.id, newPassword);
+            if (result.success) {
+                toast.success(`Password updated for ${selectedUser.name}`);
+                setPasswordDialogOpen(false);
+                setNewPassword("");
+                setSelectedUser(null);
+            } else {
+                toast.error(result.error || "Failed to update password");
+            }
+        } catch (error) {
+            toast.error("An error occurred");
+        }
+    }
+
+    const handleRoleUpdate = async () => {
+        if (!selectedUser || !newRole) return;
+        try {
+            const result = await setUserRole(selectedUser.id, newRole);
+            if (result.success) {
+                toast.success(`Role updated for ${selectedUser.name}`);
+                setData(prev => prev.map(u => u.id === selectedUser.id ? { ...u, role: newRole } : u));
+                setRoleDialogOpen(false);
+                setSelectedUser(null);
+            } else {
+                toast.error(result.error || "Failed to update role");
+            }
+        } catch (error) {
+            toast.error("An error occurred");
+        }
+    }
 
     const handleBan = async (user: UserType) => {
         try {
@@ -175,6 +235,21 @@ export function UserTable({ initialData }: UserTableProps) {
                             <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleDelete(user)}>
                                 <Trash className="mr-2 h-4 w-4" /> Delete User
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => {
+                                setSelectedUser(user);
+                                setNewPassword("");
+                                setPasswordDialogOpen(true);
+                            }}>
+                                <Key className="mr-2 h-4 w-4" /> Reset Password
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                                setSelectedUser(user);
+                                setNewRole(user.role as "admin" | "user");
+                                setRoleDialogOpen(true);
+                            }}>
+                                <UserCog className="mr-2 h-4 w-4" /> Change Role
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )
@@ -282,6 +357,60 @@ export function UserTable({ initialData }: UserTableProps) {
                     </Button>
                 </div>
             </div>
+            <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogDescription>
+                            Enter a new password for {selectedUser?.name}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="new-password">New Password</Label>
+                            <Input
+                                id="new-password"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handlePasswordUpdate}>Update Password</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Change User Role</DialogTitle>
+                        <DialogDescription>
+                            Select a new role for {selectedUser?.name}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="role">Role</Label>
+                            <Select value={newRole} onValueChange={(value: "admin" | "user") => setNewRole(value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="user">User</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRoleDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleRoleUpdate}>Update Role</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
