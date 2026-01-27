@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f87171;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="scaleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#1e3a8a"/>
+  
+  <!-- Open Book -->
+  <path d="M 150 320 Q 256 280 362 320 L 362 440 Q 256 400 150 440 Z" 
+        fill="url(#bookGradient)" stroke="#000" stroke-width="4"/>
+  <path d="M 256 280 L 256 400" stroke="#000" stroke-width="4"/>
+  
+  <!-- Scales of Justice -->
+  <!-- Center pole -->
+  <rect x="248" y="120" width="16" height="180" fill="#ef4444" rx="4"/>
+  
+  <!-- Top ornament -->
+  <ellipse cx="256" cy="120" rx="12" ry="20" fill="#ef4444"/>
+  
+  <!-- Crossbar -->
+  <rect x="180" y="180" width="152" height="12" fill="#ef4444" rx="6"/>
+  
+  <!-- Left scale -->
+  <path d="M 200 200 L 180 230 L 220 230 Z" fill="#4ade80" stroke="#000" stroke-width="3"/>
+  <line x1="200" y1="190" x2="200" y2="200" stroke="#4ade80" stroke-width="3"/>
+  
+  <!-- Right scale -->
+  <path d="M 312 200 L 292 230 L 332 230 Z" fill="#fbbf24" stroke="#000" stroke-width="3"/>
+  <line x1="312" y1="190" x2="312" y2="200" stroke="#fbbf24" stroke-width="3"/>
+  
+  <!-- Letter ዙ (Zu from Zufan) in center -->
+  <text x="256" y="270" font-family="serif" font-size="48" font-weight="bold" 
+        fill="#ef4444" text-anchor="middle">ዙ</text>
+</svg>

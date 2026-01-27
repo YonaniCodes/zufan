@@ -14,40 +14,32 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
 
 export function VectorSearchTest() {
     const [query, setQuery] = React.useState("")
     const [results, setResults] = React.useState<any[]>([])
     const [isSearching, setIsSearching] = React.useState(false)
 
-    const handleSearch = () => {
-        if (!query) return
+    const handleSearch = async () => {
+        if (!query.trim()) return
         setIsSearching(true)
 
-        // Simulate search delay
-        setTimeout(() => {
-            setResults([
-                {
-                    id: "chk_9283",
-                    text: "...the obligations of the Confidentiality Agreement shall survive the termination of this contract for a period of five (5) years...",
-                    source: "NDA_Alpha_Corp_v2.pdf",
-                    score: 0.89,
-                },
-                {
-                    id: "chk_1029",
-                    text: "...neither party may disclose the terms of this settlement without prior written consent...",
-                    source: "Smith_v_Jones_Ruling.docx",
-                    score: 0.76,
-                },
-                {
-                    id: "chk_5512",
-                    text: "...data processing agreements must be in place before transferring personal data to third countries...",
-                    source: "Regulation_EU_2024_AI.pdf",
-                    score: 0.72,
-                }
-            ])
+        try {
+            const data = await api.vectorSearch(query)
+            setResults(data.map((r, i) => ({
+                id: `chk_${i}`,
+                text: r.content,
+                source: r.metadata?.source || "Unknown",
+                score: r.score,
+            })))
+        } catch (error) {
+            toast.error("Search failed")
+            console.error("Search error:", error)
+        } finally {
             setIsSearching(false)
-        }, 800)
+        }
     }
 
     return (

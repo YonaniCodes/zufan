@@ -5,8 +5,20 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { FileText, Database, Clock, HardDrive } from "lucide-react"
+import { DocumentStats } from "@/lib/api"
 
-export function StatsCards() {
+interface StatsCardsProps {
+    documents: DocumentStats[]
+}
+
+export function StatsCards({ documents }: StatsCardsProps) {
+    const totalDocs = documents.length
+    const totalChunks = documents.reduce((acc, doc) => acc + (doc.chunks || 0), 0)
+    const totalChars = documents.reduce((acc, doc) => acc + (doc.total_chars || 0), 0)
+
+    // Estimate size (roughly 1 char = 1 byte)
+    const totalSizeMB = (totalChars / (1024 * 1024)).toFixed(2)
+
     return (
         <div className="grid gap-4 w-full min-w-0 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -17,9 +29,9 @@ export function StatsCards() {
                     <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">1,284</div>
+                    <div className="text-2xl font-bold">{totalDocs.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">
-                        +12 from last week
+                        Files indexed in knowledge base
                     </p>
                 </CardContent>
             </Card>
@@ -31,35 +43,35 @@ export function StatsCards() {
                     <Database className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">84,392</div>
+                    <div className="text-2xl font-bold">{totalChunks.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">
-                        98.2% indexed
+                        Total chunks across all documents
                     </p>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Last Sync</CardTitle>
+                    <CardTitle className="text-sm font-medium">Character Count</CardTitle>
                     <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">2m ago</div>
+                    <div className="text-2xl font-bold">{(totalChars / 1000).toFixed(1)}k</div>
                     <p className="text-xs text-muted-foreground">
-                        Auto-sync enabled
+                        Total Amharic characters
                     </p>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                        Storage Usage
+                        Estimated Usage
                     </CardTitle>
                     <HardDrive className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">4.2 GB</div>
+                    <div className="text-2xl font-bold">{totalSizeMB} MB</div>
                     <p className="text-xs text-muted-foreground">
-                        +201 MB pending
+                        Vector store storage impact
                     </p>
                 </CardContent>
             </Card>

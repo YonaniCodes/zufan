@@ -4,7 +4,9 @@ import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Upload, X, File as FileIcon, CheckCircle2 } from "lucide-react"
+import { Upload, X, File as FileIcon, CheckCircle2, FileText } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,6 +35,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 // import { useToast } from "@/hooks/use-toast"
 import { toast } from "sonner"
+import { api } from "@/lib/api"
 
 const formSchema = z.object({
     jurisdiction: z.string().min(1, "Please select a jurisdiction"),
@@ -40,10 +43,15 @@ const formSchema = z.object({
     documentType: z.string().min(1, "Please select a document type"),
 })
 
-export function UploadZone() {
+interface UploadZoneProps {
+    onUploadSuccess?: () => void
+}
+
+export function UploadZone({ onUploadSuccess }: UploadZoneProps) {
     const [file, setFile] = React.useState<File | null>(null)
     const [progress, setProgress] = React.useState(0)
     const [isUploading, setIsUploading] = React.useState(false)
+    const [uploadType, setUploadType] = React.useState<'pdf' | 'chunks'>('pdf')
     // const { toast } = useToast()
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -71,11 +79,21 @@ export function UploadZone() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0])
+            const selectedFile = e.target.files[0]
+            // Validate file type based on upload mode
+            if (uploadType === 'pdf' && selectedFile.type !== 'application/pdf') {
+                toast.error('Please select a PDF file')
+                return
+            }
+            if (uploadType === 'chunks' && selectedFile.type !== 'application/json') {
+                toast.error('Please select a JSON file for chunks upload')
+                return
+            }
+            setFile(selectedFile)
         }
     }
 
-    const onSubmit = async () => {
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
         if (!file) {
             toast.error("No file selected", {
                 description: "Please select a file to upload.",
@@ -84,29 +102,47 @@ export function UploadZone() {
         }
 
         setIsUploading(true)
-        setProgress(0)
+        setProgress(10)
 
-        // Simulate upload progress
-        const interval = setInterval(() => {
-            setProgress((prev) => {
-                if (prev >= 100) {
-                    clearInterval(interval)
-                    return 100
-                }
-                return prev + 10
-            })
-        }, 200)
+        try {
+            // Simulated progress because standard fetch doesn't support progress events easily
+            const interval = setInterval(() => {
+                setProgress((prev) => (prev < 90 ? prev + 5 : prev))
+            }, 300)
 
-        setTimeout(() => {
+            if (uploadType === 'pdf') {
+                // Backend only accepts the file, metadata is frontend-only for now
+                await api.uploadFile(file)
+            } else {
+                // For chunks, read the JSON file and send it
+                const text = await file.text()
+                const chunks = JSON.parse(text)
+                await api.uploadChunks(chunks)
+            }
+
             clearInterval(interval)
             setProgress(100)
-            setIsUploading(false)
+
             toast.success("Upload Successful", {
-                description: `Document ${file.name} indexed successfully.`,
+                description: `${uploadType === 'pdf' ? 'Document' : 'Chunks'} ${file.name} indexed successfully.`,
             })
+
             setFile(null)
             form.reset()
-        }, 2500)
+
+            // Wait a moment for backend to finish processing before refreshing
+            setTimeout(() => {
+                onUploadSuccess?.()
+            }, 500)
+        } catch (error) {
+            toast.error("Upload Failed", {
+                description: "An error occurred during indexing. Please try again.",
+            })
+            console.error("Upload error:", error)
+        } finally {
+            setIsUploading(false)
+            setProgress(0)
+        }
     }
 
     return (
@@ -118,12 +154,28 @@ export function UploadZone() {
                 onDragOver={onDragOver}
             >
                 <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                    {/* Upload Type Toggle */}
+                    <div className="flex items-center space-x-3 mb-4 p-3 rounded-lg bg-muted/30 w-full max-w-sm">
+                        <FileText className={`h-4 w-4 ${uploadType === 'pdf' ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <Label htmlFor="upload-mode" className="text-sm font-medium flex-1">
+                            {uploadType === 'pdf' ? 'PDF Upload' : 'Chunks Upload'}
+                        </Label>
+                        <Switch
+                            id="upload-mode"
+                            checked={uploadType === 'chunks'}
+                            onCheckedChange={(checked) => {
+                                setUploadType(checked ? 'chunks' : 'pdf')
+                                setFile(null) // Clear file when switching modes
+                            }}
+                        />
+                    </div>
+
                     <input
                         type="file"
                         id="file-upload"
                         className="hidden"
                         onChange={handleFileChange}
-                        accept=".pdf,.docx,.txt"
+                        accept={uploadType === 'pdf' ? '.pdf' : '.json'}
                     />
                     {file ? (
                         <div className="flex flex-col items-center gap-2">
@@ -147,12 +199,14 @@ export function UploadZone() {
                             className="flex flex-col items-center cursor-pointer"
                         >
                             <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                            <h3 className="font-semibold text-lg">Upload Legal Document</h3>
+                            <h3 className="font-semibold text-lg">
+                                {uploadType === 'pdf' ? 'Upload Legal Document' : 'Upload Chunks JSON'}
+                            </h3>
                             <p className="text-sm text-muted-foreground mt-1">
                                 Drag & drop or click to browse
                             </p>
                             <p className="text-xs text-muted-foreground mt-2">
-                                PDF, DOCX, TXT (Max 50MB)
+                                {uploadType === 'pdf' ? 'PDF files (Max 50MB)' : 'JSON files with pre-chunked data'}
                             </p>
                         </label>
                     )}
@@ -185,10 +239,13 @@ export function UploadZone() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="us-federal">US Federal</SelectItem>
-                                                <SelectItem value="eu-gdpr">EU (GDPR)</SelectItem>
-                                                <SelectItem value="uk-law">UK Common Law</SelectItem>
-                                                <SelectItem value="ca-law">California State</SelectItem>
+                                                <SelectItem value="et-federal">Ethiopian Federal</SelectItem>
+                                                <SelectItem value="et-addis-ababa">Addis Ababa City Courts</SelectItem>
+                                                <SelectItem value="et-oromia">Oromia Regional Courts</SelectItem>
+                                                <SelectItem value="et-amhara">Amhara Regional Courts</SelectItem>
+                                                <SelectItem value="et-tigray">Tigray Regional Courts</SelectItem>
+                                                <SelectItem value="et-sidama">Sidama Regional Courts</SelectItem>
+                                                <SelectItem value="et-somali">Somali Regional Courts</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -224,10 +281,12 @@ export function UploadZone() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
+                                                <SelectItem value="proclamation">Proclamation</SelectItem>
+                                                <SelectItem value="directive">Directive</SelectItem>
+                                                <SelectItem value="regulation">Regulation</SelectItem>
+                                                <SelectItem value="court-decision">Court Decision</SelectItem>
                                                 <SelectItem value="contract">Contract / Agreement</SelectItem>
-                                                <SelectItem value="case-law">Case Law</SelectItem>
-                                                <SelectItem value="statute">Statute / Regulation</SelectItem>
-                                                <SelectItem value="pleading">Pleading</SelectItem>
+                                                <SelectItem value="cassation">Cassation Decision</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

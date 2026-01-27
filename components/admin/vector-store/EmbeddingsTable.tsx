@@ -26,86 +26,73 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
-type Embedding = {
+import { api, DocumentStats } from "@/lib/api"
+import { Loader2 } from "lucide-react"
+
+export type Embedding = {
     id: string
     source: string
     tokens: number
     created: string
 }
 
-const data: Embedding[] = [
-    {
-        id: "vec_8f7e6d",
-        source: "NDA_Alpha_Corp_v2.pdf (Chunk 12)",
-        tokens: 421,
-        created: "2 mins ago",
-    },
-    {
-        id: "vec_2a1b3c",
-        source: "NDA_Alpha_Corp_v2.pdf (Chunk 13)",
-        tokens: 388,
-        created: "2 mins ago",
-    },
-    {
-        id: "vec_9g8h7i",
-        source: "Regulation_EU_2024_AI.pdf (Chunk 45)",
-        tokens: 512,
-        created: "15 mins ago",
-    },
-    {
-        id: "vec_4j5k6l",
-        source: "Smith_v_Jones_Ruling.docx (Chunk 8)",
-        tokens: 256,
-        created: "1 hour ago",
-    },
-    {
-        id: "vec_7m8n9o",
-        source: "Service_Agreement_Final.pdf (Chunk 1)",
-        tokens: 128,
-        created: "3 hours ago",
-    },
-]
-
-export const columns: ColumnDef<Embedding>[] = [
-    {
-        accessorKey: "id",
-        header: "Vector ID",
-        cell: ({ row }) => <div className="font-mono text-xs">{row.getValue("id")}</div>,
-    },
-    {
-        accessorKey: "source",
-        header: "Source Chunk",
-        cell: ({ row }) => <div className="font-medium text-sm truncate max-w-[200px]">{row.getValue("source")}</div>,
-    },
-    {
-        accessorKey: "tokens",
-        header: "Tokens",
-        cell: ({ row }) => <div className="text-sm">{row.getValue("tokens")}</div>,
-    },
-    {
-        accessorKey: "created",
-        header: "Indexed",
-        cell: ({ row }) => <div className="text-muted-foreground text-sm">{row.getValue("created")}</div>,
-    },
-    {
-        id: "actions",
-        cell: () => {
-            return (
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <ArrowUpRight className="h-4 w-4" />
-                    <span className="sr-only">View</span>
-                </Button>
-            )
-        },
-    },
-]
-
 export function EmbeddingsTable() {
+    const [documents, setDocuments] = React.useState<any[]>([])
+    const [isLoading, setIsLoading] = React.useState(true)
+
+    React.useEffect(() => {
+        api.getDocuments()
+            .then(docs => {
+                console.log("Fetched documents for embeddings table:", docs)
+                setDocuments(docs)
+            })
+            .catch(err => console.error("Failed to fetch documents:", err))
+            .finally(() => setIsLoading(false))
+    }, [])
+
+    const data: Embedding[] = React.useMemo(() => {
+        console.log("Mapping documents to embeddings:", documents)
+        return documents.map((doc: any, i) => ({
+            id: `doc_${i}`,
+            source: doc.name || doc.id || doc.filename || "Unknown",
+            tokens: Math.round((doc.total_chars || 0) / 4), // Rough token estimate
+            created: "Indexed",
+        }))
+    }, [documents])
+
+    const columns: ColumnDef<Embedding>[] = [
+        {
+            accessorKey: "source",
+            header: "Source Document",
+            cell: ({ row }) => <div className="font-medium text-sm truncate max-w-[200px]">{row.getValue("source")}</div>,
+        },
+        {
+            accessorKey: "tokens",
+            header: "Est. Tokens",
+            cell: ({ row }) => <div className="text-sm">{row.getValue("tokens")}</div>,
+        },
+        {
+            accessorKey: "created",
+            header: "Status",
+            cell: ({ row }) => <div className="text-muted-foreground text-sm">{row.getValue("created")}</div>,
+        },
+    ]
+
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
     })
+
+    if (isLoading) {
+        return (
+            <Card>
+                <CardContent className="flex items-center justify-center p-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
         <Card>

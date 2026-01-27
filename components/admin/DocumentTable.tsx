@@ -35,129 +35,115 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { api, DocumentStats } from "@/lib/api"
+import { toast } from "sonner"
 
 export type Document = {
     id: string
     name: string
-    type: "Contract" | "Case Law" | "Statute" | "Pleading"
-    status: "Indexed" | "Processing" | "Error"
+    type: string
+    status: string
     date: string
     size: string
+    chunks: number
+    chars: number
 }
 
-const data: Document[] = [
-    {
-        id: "m5gr84i9",
-        name: "NDA_Alpha_Corp_v2.pdf",
-        type: "Contract",
-        status: "Indexed",
-        date: "2024-04-12",
-        size: "2.4 MB",
-    },
-    {
-        id: "3u1re74j",
-        name: "Smith_v_Jones_Ruling.docx",
-        type: "Case Law",
-        status: "Indexed",
-        date: "2024-04-10",
-        size: "1.1 MB",
-    },
-    {
-        id: "derv1ws0",
-        name: "Regulation_EU_2024_AI.pdf",
-        type: "Statute",
-        status: "Processing",
-        date: "2024-04-14",
-        size: "15.4 MB",
-    },
-    {
-        id: "5kma53ae",
-        name: "Complaint_File_0023.txt",
-        type: "Pleading",
-        status: "Error",
-        date: "2024-03-22",
-        size: "24 KB",
-    },
-    {
-        id: "bhqecj4p",
-        name: "Service_Agreement_Final.pdf",
-        type: "Contract",
-        status: "Indexed",
-        date: "2024-04-01",
-        size: "5.2 MB",
-    },
-]
+interface DocumentTableProps {
+    documents: DocumentStats[]
+    onRefresh: () => void
+    isLoading?: boolean
+}
 
-export const columns: ColumnDef<Document>[] = [
-    {
-        accessorKey: "name",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    File Name
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            )
-        },
-        cell: ({ row }) => <div className="ml-4 font-medium flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" /> {row.getValue("name")}</div>,
-    },
-    {
-        accessorKey: "type",
-        header: "Type",
-        cell: ({ row }) => <div>{row.getValue("type")}</div>,
-    },
-    {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-            const status = row.getValue("status") as string
-            return (
-                <Badge variant={status === "Indexed" ? "secondary" : status === "Processing" ? "outline" : "destructive"}>
-                    {status}
-                </Badge>
-            )
-        },
-    },
-    {
-        accessorKey: "date",
-        header: "Upload Date",
-        cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("date")}</div>,
-    },
-    {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
-            const payment = row.original
+export function DocumentTable({ documents, onRefresh, isLoading }: DocumentTableProps) {
+    const data: Document[] = React.useMemo(() => {
+        return documents.map((doc: any, i) => ({
+            id: doc.id || doc.filename || `doc-${i}`,
+            name: doc.name || doc.filename || 'Unnamed Document',
+            type: doc.type,
+            status: doc.status || "Indexed",
+            date: "-", // Backend doesn't return date yet
+            size: `${(doc.total_chars / 1024).toFixed(1)} KB`,
+            chunks: doc.chunks,
+            chars: doc.total_chars
+        }))
+    }, [documents])
 
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(payment.id)}
-                        >
-                            Copy Details
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem><RefreshCw className="mr-2 h-4 w-4" /> Re-index</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive"><Trash className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
-    },
-]
+    const handleDelete = async (filename: string) => {
+        try {
+            await api.deleteDocument(filename)
+            toast.success("Document deleted")
+            onRefresh()
+        } catch (error) {
+            toast.error("Failed to delete document")
+        }
+    }
 
-export function DocumentTable() {
+    const columns: ColumnDef<Document>[] = [
+        {
+            accessorKey: "name",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        File Name
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="ml-4 font-medium flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" /> {row.getValue("name")}</div>,
+        },
+        {
+            accessorKey: "type",
+            header: "Type",
+            cell: ({ row }) => <Badge variant="outline">{row.getValue("type")}</Badge>,
+        },
+        {
+            accessorKey: "chunks",
+            header: "Chunks",
+            cell: ({ row }) => <div>{row.getValue("chunks")}</div>,
+        },
+        {
+            accessorKey: "size",
+            header: "Size",
+            cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("size")}</div>,
+        },
+        {
+            id: "actions",
+            enableHiding: false,
+            cell: ({ row }) => {
+                const doc = row.original
+
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                                onClick={() => navigator.clipboard.writeText(doc.name)}
+                            >
+                                Copy Filename
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleDelete(doc.name)}
+                            >
+                                <Trash className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )
+            },
+        },
+    ]
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
         []

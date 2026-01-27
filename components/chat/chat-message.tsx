@@ -29,8 +29,7 @@ export function ChatMessage({ role, content, citations }: ChatMessageProps) {
           </>
         ) : (
           <>
-            <User className="size-5 m-auto" />
-            <AvatarFallback>ተጠቃሚ</AvatarFallback>
+            <AvatarFallback className="text-sm font-semibold">B</AvatarFallback>
           </>
         )}
       </Avatar>

@@ -34,147 +34,94 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { api } from "@/lib/api"
+import { Loader2, RefreshCw } from "lucide-react"
 
 export type LogEntry = {
     id: string
     action: string
     user: string
-    role: "Admin" | "User" | "System"
-    status: "Success" | "Failed" | "Warning"
+    role: string
+    status: string
     timestamp: string
     details: string
 }
 
-const data: LogEntry[] = [
-    {
-        id: "log_1",
-        action: "Document Upload",
-        user: "sarah.connor@firm.com",
-        role: "User",
-        status: "Success",
-        timestamp: "2024-04-22 14:32:01",
-        details: "Uploaded NDA_Alpha_Corp_v2.pdf",
-    },
-    {
-        id: "log_2",
-        action: "Login Attempt",
-        user: "unknown",
-        role: "System",
-        status: "Failed",
-        timestamp: "2024-04-22 14:30:55",
-        details: "Invalid password for user admin",
-    },
-    {
-        id: "log_3",
-        action: "Vector Indexing",
-        user: "System",
-        role: "System",
-        status: "Success",
-        timestamp: "2024-04-22 14:28:12",
-        details: "Batch processed 45 chunks",
-    },
-    {
-        id: "log_4",
-        action: "Settings Change",
-        user: "mike.ross@firm.com",
-        role: "Admin",
-        status: "Warning",
-        timestamp: "2024-04-22 12:15:00",
-        details: "Changed retention policy to 5 years",
-    },
-    {
-        id: "log_5",
-        action: "Search Query",
-        user: "jessica.pearson@firm.com",
-        role: "User",
-        status: "Success",
-        timestamp: "2024-04-22 11:45:23",
-        details: "Query: 'breach of contract damages'",
-    },
-]
+interface AuditLogTableProps {
+    logs: any[]
+    isLoading?: boolean
+    onRefresh?: () => void
+}
 
-export const columns: ColumnDef<LogEntry>[] = [
-    {
-        accessorKey: "timestamp",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Timestamp
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            )
-        },
-        cell: ({ row }) => <div className="ml-4 text-xs text-muted-foreground font-mono">{row.getValue("timestamp")}</div>,
-    },
-    {
-        accessorKey: "user",
-        header: "User",
-        cell: ({ row }) => (
-            <div className="flex flex-col">
-                <span className="font-medium text-sm">{row.getValue("user")}</span>
-                <span className="text-xs text-muted-foreground">{row.original.role}</span>
-            </div>
-        ),
-    },
-    {
-        accessorKey: "action",
-        header: "Action",
-        cell: ({ row }) => <div className="font-medium">{row.getValue("action")}</div>,
-    },
-    {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-            const status = row.getValue("status") as string
-            return (
-                <Badge variant={status === "Success" ? "outline" : status === "Failed" ? "destructive" : "secondary"}>
-                    {status}
-                </Badge>
-            )
-        },
-    },
-    {
-        accessorKey: "details",
-        header: "Details",
-        cell: ({ row }) => <div className="text-sm text-muted-foreground truncate max-w-[300px]">{row.getValue("details")}</div>,
-    },
-    {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(row.original.id)}
-                        >
-                            Copy Log ID
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
-    },
-]
+export function AuditLogTable({ logs, isLoading, onRefresh }: AuditLogTableProps) {
+    const data: LogEntry[] = React.useMemo(() => {
+        return logs.map((log, i) => ({
+            id: log.id || `log_${i}`,
+            action: log.event_type || log.action || "System Event",
+            user: log.user_id || log.user || "System",
+            role: log.role || "User",
+            status: log.status || "Success",
+            timestamp: log.timestamp || new Date().toISOString(),
+            details: log.details || JSON.stringify(log.metadata || {}),
+        }))
+    }, [logs])
 
-export function AuditLogTable() {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
         []
     )
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [rowSelection, setRowSelection] = React.useState({})
+
+    const columns: ColumnDef<LogEntry>[] = [
+        {
+            accessorKey: "timestamp",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Timestamp
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="ml-4 text-[10px] text-muted-foreground font-mono">{new Date(row.getValue("timestamp")).toLocaleString()}</div>,
+        },
+        {
+            accessorKey: "user",
+            header: "User",
+            cell: ({ row }) => (
+                <div className="flex flex-col">
+                    <span className="font-medium text-xs truncate max-w-[100px]">{row.getValue("user")}</span>
+                    <span className="text-[10px] text-muted-foreground">{row.original.role}</span>
+                </div>
+            ),
+        },
+        {
+            accessorKey: "action",
+            header: "Action",
+            cell: ({ row }) => <div className="font-medium text-xs">{row.getValue("action")}</div>,
+        },
+        {
+            accessorKey: "status",
+            header: "Status",
+            cell: ({ row }) => {
+                const status = row.getValue("status") as string
+                return (
+                    <Badge variant={status.toLowerCase() === "success" ? "outline" : "destructive"} className="text-[10px] h-5">
+                        {status}
+                    </Badge>
+                )
+            },
+        },
+        {
+            accessorKey: "details",
+            header: "Details",
+            cell: ({ row }) => <div className="text-[10px] text-muted-foreground truncate max-w-[200px]">{row.getValue("details")}</div>,
+        },
+    ]
 
     const table = useReactTable({
         data,

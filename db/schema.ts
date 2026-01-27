@@ -96,13 +96,72 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
+// Chat tables
+export const chatSession = pgTable(
+  "chat_session",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("chat_session_userId_idx").on(table.userId),
+    index("chat_session_createdAt_idx").on(table.createdAt),
+  ]
+);
+
+export const chatMessage = pgTable(
+  "chat_message",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => chatSession.id, { onDelete: "cascade" }),
+    role: text("role").notNull(), // 'user' | 'assistant'
+    content: text("content").notNull(),
+    citations: text("citations"), // JSON stringified array
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("chat_message_sessionId_idx").on(table.sessionId),
+    index("chat_message_createdAt_idx").on(table.createdAt),
+  ]
+);
+
+// Chat relations
+export const chatSessionRelations = relations(chatSession, ({ one, many }) => ({
+  user: one(user, {
+    fields: [chatSession.userId],
+    references: [user.id],
+  }),
+  messages: many(chatMessage),
+}));
+
+export const chatMessageRelations = relations(chatMessage, ({ one }) => ({
+  session: one(chatSession, {
+    fields: [chatMessage.sessionId],
+    references: [chatSession.id],
+  }),
+}));
+
 const schema = {
-	verification,
-	account,
-	user,
-	session,
-	userRelations,
-	sessionRelations,
-	accountRelations
+  verification,
+  account,
+  user,
+  session,
+  userRelations,
+  sessionRelations,
+  accountRelations,
+  chatSession,
+  chatMessage,
+  chatSessionRelations,
+  chatMessageRelations,
 };
 export default schema;
